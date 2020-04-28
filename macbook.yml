@@ -1,0 +1,49 @@
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    homebrew_taps:
+      - homebrew/services
+
+    homebrew_packages:
+      - { name: python }
+      - { name: ansible }
+      - { name: readline }
+      - { name: openssl }
+      - { name: git }
+      - { name: zsh, install_options: disable-etcdir }
+      - { name: wget }
+      - { name: curl }
+      - { name: jq }
+      - { name: direnv }
+      - { name: mysql }
+      - { name: sqlite }
+      - { name: redis }
+      - { name: tmux }
+
+    homebrew_cask_packages:
+      - { name: iterm2 }
+      - { name: firefox }
+      - { name: google-chrome }
+
+  tasks:
+    - name: Add tap repositories of homebrew
+      homebrew_tap:
+        name: '{{ item }}'
+        state: present
+      with_items: '{{ homebrew_taps }}'
+
+    - name: Update homebrew
+      homebrew: update_homebrew=yes
+
+    - name: Install homebrew packages
+      homebrew:
+        name: '{{ item.name }}'
+        state: '{{ item.state | default("present") }}'
+      with_items: '{{ homebrew_packages }}'
+
+    - name: Install homebrew cask packages
+      homebrew_cask: name={{ item.name }} state=installed
+      environment:
+        HOMEBREW_CASK_OPTS: "--appdir=/Applications"
+      with_items: '{{ homebrew_cask_packages }}'
